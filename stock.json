@@ -1,0 +1,13 @@
+[
+  {
+    "id": "1234",
+    "name": "stm",
+    "desc": "XXX",
+    "category": "",
+    "tags": ["X", "Y"],
+    "uid": "1234",
+    "status": "available",
+    "deadline": "YYYY/MM/DD",
+    "rent": 12
+  }
+]
