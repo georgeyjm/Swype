@@ -4,7 +4,7 @@ import logging
 from threading import Thread
 import shutil
 import os
-from flask import Flask, Response, request, send_file, send_from_directory, render_template, abort, redirect, url_for
+from flask import Flask, Response, request, send_file, send_from_directory, render_template, abort, redirect, url_for, jsonify
 from flask_cors import CORS
 import datetime
 import random
@@ -55,11 +55,10 @@ app = Flask(__name__)
 # app.secret_key = b'swim4love'
 app.config['CORS_HEADERS'] = 'Content-Type'
 CORS(app)
-
+stock={}
 ##################### Initialize stored variables #####################
 with open('Stock.json', 'r') as file:
 	stock = json.load(file)
-last_stock_id = max(item.id for item in stock)
 
 ##################### Request handling #####################
 @app.route('/')
@@ -138,7 +137,7 @@ def new_stock():
 			description = request.form.get('description')
 			category = request.form.get('category')
 			tags = request.form.getlist('tags')
-			uid = request.form.get('uid')
+			uid = request.cookies.get('Username')
 			deadline = request.form.get('deadline')
 			rent = request.form.get('rent')
 			pid = str(datetime.datetime.now()).replace(' ','').replace('.','').replace(':','').replace('-','')+str(random.randint(0,10000)).zfill(5)
@@ -150,7 +149,8 @@ def new_stock():
 				return resp({'ret': 0, 'msg': 'fuck you, give me correct params'})
 			else:
 				Product_Image.save(os.path.join(Product_Image_Save_Directory, Product_Image_Name))
-				stock.append({
+				stock.update({pid:{
+							'pid':pid,
 							'name': name,
 							'description':description,
 							'category': category,
@@ -158,9 +158,8 @@ def new_stock():
 							'uid':uid,
 							'deadline':deadline,
 							'rent':rent,
-							'pid':pid
 							'status':status
-							})
+							}})
 				with open('Stock.json', 'w') as outfile:
 						json.dump(stock, outfile)
 				return redirect(url_for('Operation_Result',Result='Product Added',Detail='Your Product Has Been Added.',NextPage=url_for('Dashboard').strip('/')))
@@ -169,7 +168,43 @@ def new_stock():
 	else:
 		return abort(403)
 
+@app.route('/Product/detail/<pid>')
+def product_detail(pid):
+	if CookieCheck():
+		try:
+			if request.method=='GET':
+				return jsonify(stock[pid])
+		except:
+			return abort(404)
 
 
+@app.route('/Search/<keys>/<terms>')
+def product_search(keys,terms):
+	if CookieCheck():
+		try:
+			result=[]
+			for product in stock:
+				if stock[product][keys]==terms:
+					result.append(stock[product])
+			return jsonify(result)
+
+
+
+
+@app.route('/Search')
+def Search():
+	if CookieCheck():
+		if request.method=='GET':
+			return render_template(PlaceHolder)
+	else:
+		return abort(403)
+
+@app.route('/Swipe')
+def Swipe():
+	if CookieCheck():
+		if request.method=='GET':
+			return render_template(PlaceHolder)
+	else:
+		return abort(403)
 
 
